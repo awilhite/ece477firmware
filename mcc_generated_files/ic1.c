@@ -1,24 +1,25 @@
-/**
-  @Generated MPLAB(c) Code Configurator Header File
 
-  @Company:
+/**
+  IC1 Generated Driver API Source File
+
+  @Company
     Microchip Technology Inc.
 
-  @File Name:
-    mcc.h
+  @File Name
+    ic1.c
 
-  @Summary:
-    This is the mcc.h file generated using MPLAB(c) Code Configurator
+  @Summary
+    This is the generated source file for the IC1 driver using MPLAB(c) Code Configurator
 
-  @Description:
-    This header file provides implementations for driver APIs for all modules selected in the GUI.
+  @Description
+    This source file provides APIs for driver for IC1.
     Generation Information :
         Product Revision  :  MPLAB(c) Code Configurator - pic24-dspic-pic32mm : v1.25
         Device            :  PIC24FJ128GA010
-        Version           :  1.02
+        Driver Version    :  0.5
     The generated drivers are tested against the following:
         Compiler          :  XC16 1.26
-        MPLAB             :  MPLAB X 3.45
+        MPLAB 	          :  MPLAB X 3.45
 */
 
 /*
@@ -42,52 +43,81 @@
     MICROCHIP PROVIDES THIS SOFTWARE CONDITIONALLY UPON YOUR ACCEPTANCE OF THESE
     TERMS.
 */
-
-#ifndef MCC_H
-#define	MCC_H
+/**
+  Section: Included Files
+*/
 #include <xc.h>
-#include "pin_manager.h"
-#include <stdint.h>
-#include <stdbool.h>
-#include "tmr2.h"
-#include "tmr3.h"
-#include "oc1.h"
-#include "traps.h"
-#include "interrupt_manager.h"
-#include "oc2.h"
 #include "ic1.h"
-#include "uart2.h"
-
-#define _XTAL_FREQ  32000000UL
 
 /**
- * @Param
-    none
- * @Returns
-    none
- * @Description
-    Initializes the device to the default states configured in the
- *                  MCC GUI
- * @Example
-    SYSTEM_Initialize(void);
- */
-void SYSTEM_Initialize(void);
+  IC Mode.
+
+  @Summary
+    Defines the IC Mode.
+
+  @Description
+    This data type defines the IC Mode of operation.
+
+*/
+
+static uint16_t         gIC1Mode;
 
 /**
- * @Param
-    none
- * @Returns
-    none
- * @Description
-    Initializes the oscillator to the default states configured in the
- *                  MCC GUI
- * @Example
-    OSCILLATOR_Initialize(void);
- */
-void OSCILLATOR_Initialize(void);
+  Section: Driver Interface
+*/
+
+void IC1_Initialize (void)
+{
+    // ICSIDL disabled; ICM Interrupt mode; ICTMR TMR2; ICI Every; 
+    IC1CON = 0x0087;
+    
+    gIC1Mode = IC1CONbits.ICM;
+    
+    IFS0bits.IC1IF = false;
+    IEC0bits.IC1IE = true;
+}
 
 
-#endif	/* MCC_H */
+void __attribute__ ( ( interrupt, no_auto_psv ) ) _ISR _IC1Interrupt( void )
+{
+    if(IFS0bits.IC1IF)
+    {
+        IFS0bits.IC1IF = 0;
+    }
+    IC1_CallBack();
+}
+
+void __attribute__ ((weak)) IC1_CallBack(void)
+{
+    // Add your custom callback code here
+}
+
+void IC1_Start( void )
+{
+    IC1CONbits.ICM = gIC1Mode;
+}
+
+void IC1_Stop( void )
+{
+    IC1CONbits.ICM = 0;
+}
+
+uint16_t IC1_CaptureDataRead( void )
+{
+    return(IC1BUF);
+}
+
+bool IC1_HasCaptureBufferOverflowed( void )
+{
+    return( IC1CONbits.ICOV );
+}
+
+
+bool IC1_IsCaptureBufferEmpty( void )
+{
+    return( ! IC1CONbits.ICBNE );
+}
+
 /**
  End of File
 */

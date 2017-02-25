@@ -69,13 +69,14 @@
 void SYSTEM_Initialize(void)
 {
     PIN_MANAGER_Initialize();
-    INTERRUPT_Initialize();
     OSCILLATOR_Initialize();
+    INTERRUPT_Initialize();
     UART2_Initialize();
     TMR3_Initialize();
     OC1_Initialize();
     OC2_Initialize();
     TMR2_Initialize();
+    IC1_Initialize();
 }
 
 void OSCILLATOR_Initialize(void)
