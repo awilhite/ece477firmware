@@ -43,6 +43,19 @@
     TERMS.
 */
 
+#define S3_PORT  PORTDbits.RD6
+#define S6_PORT  PORTDbits.RD7
+#define S5_PORT  PORTAbits.RA7       //Overlaps with D10
+#define S4_PORT  PORTDbits.RD13
+
+#define S3_TRIS  TRISDbits.TRISD6
+#define S6_TRIS  TRISDbits.TRISD7
+#define S5_TRIS  TRISAbits.TRISA7
+#define S4_TRIS  TRISDbits.TRISD13
+
+#define BUTTON_PRESSED      0
+#define BUTTON_NOT_PRESSED  1
+
 #define LED_D3_LAT      LATAbits.LATA0
 #define LED_D4_LAT      LATAbits.LATA1
 #define LED_D5_LAT      LATAbits.LATA2
@@ -90,6 +103,16 @@
 #include "mcc_generated_files/mcc.h"
 
 unsigned int count = 0;
+
+unsigned int button_cnt = 0;
+unsigned int button_state = 0;
+unsigned int button_pressed = 0;
+
+unsigned int mbutton_state = 0;
+unsigned int mbutton_pressed = 0;
+
+unsigned int motor_state = 1;
+
 unsigned int time_ref = 0;
 unsigned int infrared_state = INFRARED_IDLE;
 unsigned int mark = 0;
@@ -106,19 +129,51 @@ void TMR2_CallBack(void)
     time_ref++;
     count++;
     
+    // 1ms period
+    
+    if (count % 25 == 0)
+    {
+        // Button 3
+        if (S3_PORT == BUTTON_PRESSED && !button_state)
+        { // button pressed now but wasn't before
+            button_state = 1;
+        }
+        else if (S3_PORT == BUTTON_NOT_PRESSED && button_state)
+        { // button was pressed, but it's not anymore
+            button_state = 0;
+            button_pressed = 1;
+        }
+        
+        // Button 6
+        if (S6_PORT == BUTTON_PRESSED && !mbutton_state)
+        { // button pressed now but wasn't before
+            mbutton_state = 1;
+        }
+        else if (S6_PORT == BUTTON_NOT_PRESSED && mbutton_state)
+        { // button was pressed, but it's not anymore
+            mbutton_state = 0;
+            mbutton_pressed = 1;
+        }
+    }
+    
+    // 0.4s period
+    
     if (count == 10000)
     {
-        LED_D3_LAT = LED_ON;
+        LED_D5_LAT = LED_ON;
     }
+    
+    // 0.8s period
+    
     else if (count == 20000)
     {
-        LED_D3_LAT = LED_OFF;
+        LED_D5_LAT = LED_OFF;
         count = 0;
         send_at = 1;
     }
 }
 
-void IC1_CallBack(void)
+/*void IC1_CallBack(void)
 {
     switch(infrared_state)
     {
@@ -144,7 +199,7 @@ void IC1_CallBack(void)
             infrared_received = 1;
             break;
     }
-}
+}*/
 
 /*
                          Main application
@@ -154,10 +209,48 @@ int main(void)
     // initialize the device
     SYSTEM_Initialize();
     
-    LED_D3_TRIS = OUTPUT;
+    S3_TRIS = INPUT;        // PWM Duty Cycle - Button S3
+    S6_TRIS = INPUT;        // Motor On/OFF - Button S6
+    
+    LED_D3_TRIS = OUTPUT;   // AOUT1 and LED D3
+    LED_D4_TRIS = OUTPUT;   // BOUT1 and LED D4
+    
+    LED_D5_TRIS = OUTPUT;   // LED D5
+    LED_D6_TRIS = OUTPUT;   // LED D6
+    
+    LED_D4_LAT = LED_OFF;    // Turn on LED 4 and BOUT1
 
     while (1)
     {
+        // checkButtons())
+        if (button_pressed)
+        {
+            button_pressed = 0;
+            button_cnt++;
+            
+            OC1RS = ((button_cnt % 10) + 1)*64;
+            LED_D6_LAT = ~LED_D6_LAT;
+        }
+        
+        if (mbutton_pressed)
+        {
+            mbutton_pressed = 0;
+            // toggle motor on and off
+            
+            motor_state = !motor_state;
+            
+            if (motor_state == 1)
+            {
+                OC1_Stop();
+                LED_D4_LAT = LED_OFF;
+            }
+            else {
+                OC1_Start();
+                LED_D4_LAT = LED_ON;
+            }
+            
+        }
+        
         if (!UART2_TransmitBufferIsFull())
         {
             if (send_at)
