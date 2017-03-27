@@ -72,6 +72,7 @@ void SYSTEM_Initialize(void)
     INTERRUPT_Initialize();
     OSCILLATOR_Initialize();
     UART2_Initialize();
+    IC2_Initialize();
     UART1_Initialize();
     TMR3_Initialize();
     OC1_Initialize();

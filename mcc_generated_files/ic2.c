@@ -1,24 +1,25 @@
-/**
-  @Generated MPLAB(c) Code Configurator Header File
 
-  @Company:
+/**
+  IC2 Generated Driver API Source File
+
+  @Company
     Microchip Technology Inc.
 
-  @File Name:
-    mcc.h
+  @File Name
+    ic2.c
 
-  @Summary:
-    This is the mcc.h file generated using MPLAB(c) Code Configurator
+  @Summary
+    This is the generated source file for the IC2 driver using MPLAB(c) Code Configurator
 
-  @Description:
-    This header file provides implementations for driver APIs for all modules selected in the GUI.
+  @Description
+    This source file provides APIs for driver for IC2.
     Generation Information :
         Product Revision  :  MPLAB(c) Code Configurator - pic24-dspic-pic32mm : v1.25
         Device            :  PIC24FJ128GA010
-        Version           :  1.02
+        Driver Version    :  0.5
     The generated drivers are tested against the following:
         Compiler          :  XC16 1.26
-        MPLAB             :  MPLAB X 3.45
+        MPLAB 	          :  MPLAB X 3.45
 */
 
 /*
@@ -42,54 +43,79 @@
     MICROCHIP PROVIDES THIS SOFTWARE CONDITIONALLY UPON YOUR ACCEPTANCE OF THESE
     TERMS.
 */
-
-#ifndef MCC_H
-#define	MCC_H
+/**
+  Section: Included Files
+*/
 #include <xc.h>
-#include "pin_manager.h"
-#include <stdint.h>
-#include <stdbool.h>
-#include "uart2.h"
-#include "uart1.h"
-#include "tmr2.h"
-#include "tmr3.h"
-#include "oc2.h"
-#include "traps.h"
-#include "interrupt_manager.h"
-#include "oc1.h"
-#include "ic1.h"
 #include "ic2.h"
 
-#define _XTAL_FREQ  32000000UL
+/**
+  IC Mode.
+
+  @Summary
+    Defines the IC Mode.
+
+  @Description
+    This data type defines the IC Mode of operation.
+
+*/
+
+static uint16_t         gIC2Mode;
 
 /**
- * @Param
-    none
- * @Returns
-    none
- * @Description
-    Initializes the device to the default states configured in the
- *                  MCC GUI
- * @Example
-    SYSTEM_Initialize(void);
- */
-void SYSTEM_Initialize(void);
+  Section: Driver Interface
+*/
 
-/**
- * @Param
-    none
- * @Returns
-    none
- * @Description
-    Initializes the oscillator to the default states configured in the
- *                  MCC GUI
- * @Example
-    OSCILLATOR_Initialize(void);
- */
-void OSCILLATOR_Initialize(void);
+void IC2_Initialize (void)
+{
+    // ICSIDL disabled; ICM Edge Detect Capture; ICTMR TMR2; ICI Every; 
+    IC2CON = 0x0081;
+    
+    gIC2Mode = IC2CONbits.ICM;
+    
+    IFS0bits.IC2IF = false;
+    IEC0bits.IC2IE = true;
+}
+
+void __attribute__ ((weak)) IC2_CallBack(void)
+{
+    // Add your custom callback code here
+}
+
+void __attribute__ ( ( interrupt, no_auto_psv ) ) _ISR _IC2Interrupt( void )
+{
+    if(IFS0bits.IC2IF)
+    {
+        IFS0bits.IC2IF = 0;
+    }
+    IC2_CallBack();
+}
+void IC2_Start( void )
+{
+    IC2CONbits.ICM = gIC2Mode;
+}
+
+void IC2_Stop( void )
+{
+    IC2CONbits.ICM = 0;
+}
+
+uint16_t IC2_CaptureDataRead( void )
+{
+    return(IC2BUF);
+}
+
+bool IC2_HasCaptureBufferOverflowed( void )
+{
+    return( IC2CONbits.ICOV );
+}
 
 
-#endif	/* MCC_H */
+bool IC2_IsCaptureBufferEmpty( void )
+{
+    return( ! IC2CONbits.ICBNE );
+}
+
 /**
  End of File
 */

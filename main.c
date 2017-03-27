@@ -268,6 +268,11 @@ void TMR2_CallBack(void)
     }
 }
 
+void IC2_CallBack(void)
+{
+    ic1_callback = ~ic1_callback;
+}
+
 void IC1_CallBack(void)
 {
     ic1_callback = ~ic1_callback;
