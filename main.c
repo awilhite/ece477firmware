@@ -43,6 +43,13 @@
     TERMS.
 */
 
+#include "mcc_generated_files/mcc.h"
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+// Development Board Button Register Bits
+
 #define S3_PORT  PORTDbits.RD6
 #define S6_PORT  PORTDbits.RD7
 #define S5_PORT  PORTAbits.RA7       //Overlaps with D10
@@ -53,8 +60,7 @@
 #define S5_TRIS  TRISAbits.TRISA7
 #define S4_TRIS  TRISDbits.TRISD13
 
-#define BUTTON_PRESSED      0
-#define BUTTON_NOT_PRESSED  1
+// Development Board LED Register Bits
 
 #define LED_D3_LAT      LATAbits.LATA0
 #define LED_D4_LAT      LATAbits.LATA1
@@ -77,30 +83,49 @@
 #define LED_ON 1
 #define LED_OFF 0
 
+#define BUTTON_PRESSED      0
+#define BUTTON_NOT_PRESSED  1
+
 #define INPUT  1
 #define OUTPUT 0
 
-#define IC1 PORTDbits.RD8
-#define IC2 PORTDbits.RD9
-#define IC3 PORTDbits.RD10
-#define IC4 PORTDbits.RD11
-#define IC5 PORTDbits.RD12
+// Input Capture Register Bit Definitions
 
-#define INFRARED_IDLE       0
-#define INFRARED_HEADER     1
-#define INFRARED_MARK       2
-#define INFRARED_SPACE      3
-#define INFRARED_DONE       4
+#define IC1_TRIS        TRISDbits.TRISD8
+#define IC2_TRIS        TRISDbits.TRISD9
+#define IC3_TRIS        TRISDbits.TRISD10
+#define IC4_TRIS        TRISDbits.TRISD11
+#define IC5_TRIS        TRISDbits.TRISD12
+
+#define IC1_LAT         LATDbits.LATD8
+#define IC2_LAT         LATDbits.LATD9
+#define IC3_LAT         LATDbits.LATD10
+#define IC4_LAT         LATDbits.LATD11
+#define IC5_LAT         LATDbits.LATD12
+
+// IR Timing Parameters
 
 #define HEADER_MARK     9000
 #define HEADER_SPACE    4500
 #define ONE_MARK        560
+#define DATA_MARK       560
 #define ONE_SPACE       1700
 #define ZERO_MARK       560
 #define ZERO_SPACE      560
+#define CUSHION         40
 
+#define READ_BUF_LEN    0x80
 
-#include "mcc_generated_files/mcc.h"
+// Infrared States
+
+enum {
+    IR_IDLE,
+    IR_HEADER_HI,
+    IR_HEADER_LO,
+    IR_HEADER_DONE,
+    IR_DATA_HI,
+    IR_DATA_LO,
+} ir_state;
 
 unsigned int count = 0;
 
@@ -114,18 +139,88 @@ unsigned int mbutton_pressed = 0;
 unsigned int motor_state = 1;
 
 unsigned int time_ref = 0;
-unsigned int infrared_state = INFRARED_IDLE;
 unsigned int mark = 0;
 unsigned int space = 0;
-unsigned int infrared_received = 0;
+unsigned int ir_received = 0;
 unsigned int x = 0;
 unsigned int y = 0;
 unsigned int send_at = 0;
 unsigned int send_response = 0;
-uint8_t buffer_read;
+unsigned int buffer_size;
+
+uint8_t buffer_read[READ_BUF_LEN];
+
+unsigned int comm_cnt = 0;
+unsigned int ir_data[32];
+
+unsigned int ic1_callback = 0;
+unsigned int ic1_count = 0;
+char ic1_str[6];
+
+// Function Declarations
+
+void println(char *);
+void esp_println(char *);
+void IO_Initialize(void);
+
+
+// Function Definitions
+
+
+void println(char * str)
+{
+    unsigned int length = 0;
+    
+    while (str[length] != '\0')
+    {
+        length++;
+    }
+    
+    UART2_WriteBuffer((uint8_t *) str, length);
+    UART2_WriteBuffer((uint8_t *) "\r\n", (uint8_t) 2);
+}
+
+void esp_println(char * str)
+{
+    unsigned int length = 0;
+    
+    while (str[length] != '\0')
+    {
+        length++;
+    }
+    
+    UART1_WriteBuffer((uint8_t *) str, length);
+    UART1_WriteBuffer((uint8_t *) "\r\n", (uint8_t) 2);
+}
+
+void IO_Initialize(void)
+{
+    S3_TRIS = INPUT;        // PWM Duty Cycle - Button S3
+    S6_TRIS = INPUT;        // Motor On/OFF - Button S6
+    
+    LED_D3_TRIS = OUTPUT;   // AOUT1 and LED D3
+    LED_D4_TRIS = OUTPUT;   // BOUT1 and LED D4
+    
+    LED_D5_TRIS = OUTPUT;   // LED D5
+    LED_D6_TRIS = OUTPUT;   // LED D6
+    
+    LED_D10_TRIS = OUTPUT;   // IC1 Callback indicator
+    
+    LED_D4_LAT = LED_OFF;    // Turn on LED 4 and BOUT1
+    
+    // Set Input Captures to INPUT
+    
+    IC1_TRIS = INPUT;
+    IC2_TRIS = INPUT;
+    IC3_TRIS = INPUT;
+    IC4_TRIS = INPUT;
+    IC5_TRIS = INPUT;
+}
 
 void TMR2_CallBack(void)
 {
+    // 40us period
+    
     time_ref++;
     count++;
     
@@ -169,37 +264,122 @@ void TMR2_CallBack(void)
     {
         LED_D5_LAT = LED_OFF;
         count = 0;
-        send_at = 1;
+        //send_at = 1;
     }
 }
 
-/*void IC1_CallBack(void)
+void IC1_CallBack(void)
 {
-    switch(infrared_state)
+    ic1_callback = ~ic1_callback;
+    
+    ic1_count++;
+    switch(ir_state)
     {
-        case INFRARED_IDLE:
-            if (IC1) { // rising edge
+        case IR_IDLE:
+            if (!IC1_LAT) { // falling edge
+                //time_ref = 0;
                 x = time_ref;
-                infrared_state = INFRARED_HEADER;
+                ir_state = IR_HEADER_HI;
+            }
+            else {
+                ir_state = IR_IDLE;
             }
             break;
-        case INFRARED_HEADER:
-            if (!IC1) {
+        case IR_HEADER_HI:
+            if (IC1_LAT) { // rising edge
                 y = time_ref;
+                if ( abs(( y - x - HEADER_MARK ) < CUSHION)) {
+                    ir_state = IR_HEADER_LO;
+                }
+                else {    
+                    ir_state = IR_IDLE;
+                }
             }
-            else { // expecting falling edge
-                infrared_state = INFRARED_IDLE;
+            else {
+                ir_state = IR_HEADER_HI;
             }
             break;
-        case INFRARED_MARK:
+        case IR_HEADER_LO: 
+            if (IC1_LAT){
+                x = time_ref;
+                if ( abs(( x - y - HEADER_SPACE ) < CUSHION) ) {
+                    ir_state = IR_HEADER_DONE;
+                }
+                else {  
+                    ir_state = IR_IDLE;
+                }
+            } 
+            else {
+                ir_state = IR_HEADER_LO;
+            }
             break;
-        case INFRARED_SPACE:
+        case IR_HEADER_DONE: 
+            if (IC1_LAT) {
+                y = time_ref;
+                if ( abs(( y - x - DATA_MARK ) < CUSHION) ) {
+                    ir_state = IR_DATA_LO;
+                }
+                else {  
+                    ir_state = IR_IDLE;
+                }
+            }
+            else {
+                ir_state = IR_HEADER_DONE;
+            }
             break;
-        case INFRARED_DONE:
-            infrared_received = 1;
+        case IR_DATA_LO: 
+            if (IC1_LAT) {
+                x = time_ref;
+                if ( abs(( x - y - ZERO_SPACE ) < CUSHION) ) {
+                    ir_data[comm_cnt] = 0;
+                    comm_cnt++;
+                    if(comm_cnt == 32){
+                        comm_cnt = 0;
+                        ir_state = IR_IDLE;
+                    }
+                    else 
+                    {
+                        ir_state = IR_DATA_HI;
+                    }
+                } else if ( abs(( x - y - ONE_SPACE ) < CUSHION) ) {
+                    ir_data[comm_cnt] = 1;
+                    comm_cnt++;
+                    
+                    if(comm_cnt == 32){
+                        comm_cnt = 0;
+                        ir_state = IR_IDLE;
+                    }
+                    else 
+                    {
+                        ir_state = IR_DATA_HI;
+                    }
+                }
+                else {  
+                    ir_state = IR_IDLE;
+                }
+            }
+            else {
+                ir_state = IR_DATA_LO;
+            }
+            
+            ir_received = 1;
+            break;
+        case IR_DATA_HI: 
+            if (IC1_LAT) {
+                y = time_ref;
+                if ( abs(( y - x - DATA_MARK ) < CUSHION) ) {
+                    ir_state = IR_DATA_LO;
+                }
+                else {  
+                    ir_state = IR_IDLE;
+                }
+            }
+            else {
+                ir_state = IR_DATA_HI;
+            }
             break;
     }
-}*/
+}
 
 /*
                          Main application
@@ -208,36 +388,37 @@ int main(void)
 {
     // initialize the device
     SYSTEM_Initialize();
+    IO_Initialize();
     
-    S3_TRIS = INPUT;        // PWM Duty Cycle - Button S3
-    S6_TRIS = INPUT;        // Motor On/OFF - Button S6
+    ir_state = IR_IDLE;
     
-    LED_D3_TRIS = OUTPUT;   // AOUT1 and LED D3
-    LED_D4_TRIS = OUTPUT;   // BOUT1 and LED D4
-    
-    LED_D5_TRIS = OUTPUT;   // LED D5
-    LED_D6_TRIS = OUTPUT;   // LED D6
-    
-    LED_D4_LAT = LED_OFF;    // Turn on LED 4 and BOUT1
+    println("Started");
 
     while (1)
     {
-        // checkButtons())
+        LED_D10_LAT = ic1_callback;
+        
+        // Button 3
         if (button_pressed)
         {
             button_pressed = 0;
             button_cnt++;
             
+            // Motor PWM
             OC1RS = ((button_cnt % 10) + 1)*64;
             LED_D6_LAT = ~LED_D6_LAT;
         }
         
+        // Button 6
         if (mbutton_pressed)
         {
             mbutton_pressed = 0;
+            
+            sprintf(ic1_str, "%d", ic1_count);
+            
             // toggle motor on and off
             
-            motor_state = !motor_state;
+            /*motor_state = !motor_state;
             
             if (motor_state == 1)
             {
@@ -247,36 +428,44 @@ int main(void)
             else {
                 OC1_Start();
                 LED_D4_LAT = LED_ON;
-            }
+            }*/
+            
+            println(ic1_str);
             
         }
         
-        if (!UART2_TransmitBufferIsFull())
+        if (!UART1_TransmitBufferIsFull())
         {
-            if (send_at)
-            {
-                send_at = 0;
-                UART2_Write("AT/r/n");
-            }
+            //esp_println("AT");
         }
         
-        if (!UART2_ReceiveBufferIsEmpty())
-        {   // Incoming command from phone
+        /*if (!UART1_ReceiveBufferIsEmpty())
+        {   // response from esp8266
             
             // Read buffer because it has something
-            buffer_read = UART2_Read();
+            buffer_size = UART2_ReceiveBufferSizeGet();
+            
+            if (buffer_size > READ_BUF_LEN)
+            {
+                buffer_size = READ_BUF_LEN;
+            }
+            
+            UART1_ReadBuffer((uint8_t *) &buffer_read, buffer_size);
+            
+            println((char *) buffer_read);   // output result to serial terminal
+            
             // do_command(buffer_read))
             // send response
-        }
+        }*/
         
-        if (infrared_received)
+        if (ir_received)
         {   // Incoming hit from vehicle
             
             // data = infrared_verify(&buffer)
             // 
             // send_hit(data)
             
-            infrared_received = 0;
+            ir_received = 0;
         }
         
     }

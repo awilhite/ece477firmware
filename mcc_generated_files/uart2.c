@@ -131,8 +131,8 @@ void UART2_Initialize (void)
    U2MODE = (0x800A & ~(1<<15));  // disabling UARTEN bit   
    // UTXISEL0 TX_ONE_CHAR; UTXINV disabled; OERR NO_ERROR_cleared; URXISEL RX_ONE_CHAR; UTXBRK COMPLETED; UTXEN disabled; ADDEN disabled; 
    U2STA = 0x0000;
-   // BaudRate = 115200; Frequency = 16000000 Hz; BRG 34; 
-   U2BRG = 0x0022;
+   // BaudRate = 9600; Frequency = 16000000 Hz; BRG 416; 
+   U2BRG = 0x01A0;
 
    IEC1bits.U2RXIE = 1;
 
