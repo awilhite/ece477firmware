@@ -68,29 +68,18 @@ static uint16_t         gIC1Mode;
 
 void IC1_Initialize (void)
 {
-    IC1CON = 0x81;
-    
-    /*IC1CONbits.ICM = 0b00; // Disable Input Capture 1 module
-
-    IC1CONbits.ICTMR = 1; // Select Timer2 as the IC1 Time base
-
-    IC1CONbits.ICI = 0b11; // Interrupt on every capture event
-
-    IC1CONbits.ICM = 0b001; // Generate capture event on every Rising and Falling edge*/
-
-    // Enable Capture Interrupt And Timer2
-
-    IPC0bits.IC1IP = 7; // Setup IC1 interrupt priority level - Highest
-    IFS0bits.IC1IF = 0; // Clear IC1 Interrupt Status Flag
-    IEC0bits.IC1IE = 1; // Enable IC1 interrupt
+    // ICSIDL disabled; ICM Edge Detect Capture; ICTMR TMR2; ICI Every; 
+    IC1CON = 0x0081;
     
     gIC1Mode = IC1CONbits.ICM;
     
+    IFS0bits.IC1IF = false;
+    IEC0bits.IC1IE = true;
 }
 
 void __attribute__ ((weak)) IC1_CallBack(void)
 {
-    // Add your custom callback code here
+    
 }
 
 void __attribute__ ( ( interrupt, no_auto_psv ) ) _ISR _IC1Interrupt( void )
@@ -101,7 +90,6 @@ void __attribute__ ( ( interrupt, no_auto_psv ) ) _ISR _IC1Interrupt( void )
     }
     IC1_CallBack();
 }
-
 void IC1_Start( void )
 {
     IC1CONbits.ICM = gIC1Mode;

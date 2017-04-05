@@ -5,12 +5,12 @@
          <string>class com.microchip.mcc.mcu16.modules.uart.UART</string>
       </entry>
       <entry>
-         <string>Pin Module</string>
-         <string>class com.microchip.mcc.mcu16.pinManager.PinManager</string>
-      </entry>
-      <entry>
          <string>WATCHDOG</string>
          <string>class com.microchip.mcc.mcu16.systemManager.wdt.Wdt</string>
+      </entry>
+      <entry>
+         <string>Pin Module</string>
+         <string>class com.microchip.mcc.mcu16.pinManager.PinManager</string>
       </entry>
       <entry>
          <string>ICD</string>
@@ -102,16 +102,16 @@
          <value>UNSUPPORTED</value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="OC1" name="OCOutput"/>
-         <value>Low</value>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="IC2" registerAlias="ICCON1" settingAlias="ICBNE" alias="disabled"/>
+         <value>0</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="OC2" registerAlias="OCCON1" settingAlias="OCSIDL" alias="enabled"/>
          <value>1</value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="IC2" registerAlias="ICCON1" settingAlias="ICBNE" alias="disabled"/>
-         <value>0</value>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="OC1" name="OCOutput"/>
+         <value>Low</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="Pin Module" registerAlias="LATB" settingAlias="LATB13" alias="clear"/>
@@ -2014,12 +2014,12 @@
          <value>disabled</value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="OC1" registerAlias="OCCON1" settingAlias="OCM" alias="Double Compare Single-Shot mode"/>
-         <value>4</value>
-      </entry>
-      <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="UART1" name="BaudRate"/>
          <value>115200</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="OC1" registerAlias="OCCON1" settingAlias="OCM" alias="Double Compare Single-Shot mode"/>
+         <value>4</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="Pin Module" name="Custom Name RA9"/>
@@ -2430,16 +2430,16 @@
          <value>disabled</value>
       </entry>
       <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="TMR2" registerAlias="TCON" settingAlias="TSIDL"/>
+         <value>disabled</value>
+      </entry>
+      <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="UART2" name="UCTS"/>
          <value>disabled</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="UART2" name="URX"/>
          <value>enabled</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="TMR2" registerAlias="TCON" settingAlias="TSIDL"/>
-         <value>disabled</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="INTERNAL OSCILLATOR" registerAlias="OSCCON" settingAlias="COSC" alias="LPRC"/>
@@ -2682,12 +2682,12 @@
          <value>disabled</value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="UART2" registerAlias="USTA" settingAlias="UTXINV"/>
-         <value>disabled</value>
-      </entry>
-      <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="TMR2" name="TMR2_TNIISRFunction"/>
          <value>ISR_TMR2_TNI</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="UART2" registerAlias="USTA" settingAlias="UTXINV"/>
+         <value>disabled</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="System Module" registerAlias="CONFIG1" settingAlias="WINDIS" alias="ON"/>
@@ -3122,12 +3122,12 @@
          <value>0</value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="UART2" registerAlias="USTA" settingAlias="URXDA" alias="HAS_DATA"/>
-         <value>1</value>
-      </entry>
-      <entry>
          <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="UART1" registerAlias="USTA" settingAlias="UTXEN" alias="disabled"/>
          <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="UART2" registerAlias="USTA" settingAlias="URXDA" alias="HAS_DATA"/>
+         <value>1</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="Pin Module" registerAlias="ODCA" settingAlias="ODA4" alias="enabled"/>
@@ -4174,12 +4174,12 @@
          <value>0</value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="UART2" name="UART2_UTXIISRFunction"/>
-         <value>ISR_UART2_UTXI</value>
-      </entry>
-      <entry>
          <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="TMR3" registerAlias="TCON" settingAlias="TCKPS" alias="1:1"/>
          <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="UART2" name="UART2_UTXIISRFunction"/>
+         <value>ISR_UART2_UTXI</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="INTERNAL OSCILLATOR" registerAlias="OSCTUN" settingAlias="TUN" alias="Center frequency"/>
@@ -4926,12 +4926,12 @@
          <value>1</value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="UART2" registerAlias="UMODE" settingAlias="USIDL" alias="enabled"/>
-         <value>1</value>
-      </entry>
-      <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="IC2" registerAlias="ICCON1"/>
          <value>129</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="UART2" registerAlias="UMODE" settingAlias="USIDL" alias="enabled"/>
+         <value>1</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="Pin Module" registerAlias="LATB" settingAlias="LATB2" alias="set"/>
@@ -6130,12 +6130,12 @@
          <value>0</value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="UART2" registerAlias="USTA" settingAlias="UTXINV" alias="disabled"/>
-         <value>0</value>
-      </entry>
-      <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="UART1" registerAlias="UMODE" settingAlias="ABAUD"/>
          <value>disabled</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="UART2" registerAlias="USTA" settingAlias="UTXINV" alias="disabled"/>
+         <value>0</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="UART2" registerAlias="UMODE" settingAlias="ABAUD"/>
@@ -6830,16 +6830,16 @@
          <value>0</value>
       </entry>
       <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="TMR2" name="TimerFrequency"/>
+         <value>16000000</value>
+      </entry>
+      <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="UART2" registerAlias="UERI" settingAlias="flag"/>
          <value>disabled</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="OC1" registerAlias="OCCON1"/>
          <value>6</value>
-      </entry>
-      <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="TMR2" name="TimerFrequency"/>
-         <value>16000000</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="INTERNAL OSCILLATOR" registerAlias="RCON" settingAlias="IOPUWR" alias="disabled"/>
@@ -7054,12 +7054,12 @@
          <value>0</value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="UART2" registerAlias="UMODE" settingAlias="URXINV" alias="enabled"/>
-         <value>1</value>
-      </entry>
-      <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="TMR3" registerAlias="TMR" settingAlias="TMR"/>
          <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="UART2" registerAlias="UMODE" settingAlias="URXINV" alias="enabled"/>
+         <value>1</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="TMR2" registerAlias="TMR" settingAlias="TMR"/>
@@ -7366,12 +7366,12 @@
          <value>disabled</value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="OC1" registerAlias="OCCON1" settingAlias="OCSIDL" alias="enabled"/>
-         <value>1</value>
-      </entry>
-      <entry>
          <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="IC1" registerAlias="ICCON1" settingAlias="ICBNE" alias="disabled"/>
          <value>0</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="OC1" registerAlias="OCCON1" settingAlias="OCSIDL" alias="enabled"/>
+         <value>1</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="Pin Module" name="anselUserSetRB1"/>
@@ -8034,12 +8034,12 @@
          <value>0</value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="TMR2" registerAlias="TCON" settingAlias="TON"/>
-         <value>enabled</value>
-      </entry>
-      <entry>
          <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="OC2" registerAlias="OCCON1" settingAlias="OCM" alias="Double Compare Single-Shot mode"/>
          <value>4</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="TMR2" registerAlias="TCON" settingAlias="TON"/>
+         <value>enabled</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="Pin Module" name="customNameUserSet RE1"/>
@@ -8418,11 +8418,11 @@
          <value>easysetup</value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="UART1" registerAlias="UTXI" settingAlias="priority"/>
+         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="IC2" registerAlias="ICCON1" settingAlias="ICM" alias="Edge Detect Capture"/>
          <value>1</value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="IC2" registerAlias="ICCON1" settingAlias="ICM" alias="Edge Detect Capture"/>
+         <key class="com.microchip.mcc.core.tokenManager.SettingKey" moduleName="UART1" registerAlias="UTXI" settingAlias="priority"/>
          <value>1</value>
       </entry>
       <entry>
@@ -8482,12 +8482,12 @@
          <value>32778</value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="UART2" registerAlias="UMODE"/>
-         <value>32778</value>
-      </entry>
-      <entry>
          <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="UART1" registerAlias="USTA" settingAlias="URXISEL" alias="RX_3_4_BUF_FULL"/>
          <value>2</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.RegisterKey" moduleName="UART2" registerAlias="UMODE"/>
+         <value>32778</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="Pin Module" registerAlias="CNEN2" settingAlias="CN16IE" alias="disabled"/>
@@ -8730,12 +8730,12 @@
          <value>0</value>
       </entry>
       <entry>
-         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="UART2" name="URTS"/>
-         <value>disabled</value>
-      </entry>
-      <entry>
          <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="IC2" registerAlias="ICCON1" settingAlias="ICI" alias="Every 2nd event"/>
          <value>1</value>
+      </entry>
+      <entry>
+         <key class="com.microchip.mcc.core.tokenManager.CustomKey" moduleName="UART2" name="URTS"/>
+         <value>disabled</value>
       </entry>
       <entry>
          <key class="com.microchip.mcc.core.tokenManager.OptionKey" moduleName="Pin Module" registerAlias="ODCD" settingAlias="ODD11" alias="disabled"/>
@@ -8936,100 +8936,100 @@
    </tokenMap>
    <generatedFileHashHistoryMap class="java.util.HashMap">
       <entry>
-         <file>mcc_generated_files/interrupt_manager.h</file>
+         <file>mcc_generated_files\interrupt_manager.h</file>
          <hash>1bb9902f7056e7cbace52c199ccb05bdf207057b34db0818f9380457e222f4f3</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files/pin_manager.h</file>
-         <hash>da0d82bd5632456c91196e6dfeddac2b7e0ef58f22034195ef494cdda9487d98</hash>
+         <file>mcc_generated_files\mcc.h</file>
+         <hash>13d84f618051e68004669335382acf76a69cec5a9dd3b2494b42a856b4af8c0d</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files/uart1.h</file>
-         <hash>59cf6f35cf05ae4db464f696dc4012dd6d6bd34e73da570a2a1af5774a151b02</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files/uart2.h</file>
-         <hash>2d5da4ee57f09cdf19eb88f11113721da189d4fac4fdb598e99ea50f5a8cecdc</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files/ic2.h</file>
-         <hash>fb41b2f1bcea4276219b96c8878bcab76c48af87bc09e23981d8e81439416504</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files/tmr2.h</file>
-         <hash>37039fe858b92666cb1d72081a3c6b1fecea1881d96c1c08ec5cd7044ccdf1c6</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files/tmr3.h</file>
-         <hash>5eb328618dc0d8432e4558302c106f7b30336edd3c30deebf7e5f986b1d59cf7</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files/traps.h</file>
-         <hash>da69f031f7e8895daf9a01e8df5ea04551c1fbb4555cf47cb0260b64f8fb7bf1</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files/oc1.c</file>
-         <hash>5561f41fca8f5e9cfa51036b84dcce501b6cbf6f79aba9dd6067817426313af5</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files/ic1.h</file>
-         <hash>396f051b208cc9c89a28b7429bf810ff00b17a2bcb7742eb2c9b885182175f4f</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files/oc2.c</file>
-         <hash>023080c03ef46574b44e19075e43d3eaea26b170e0572af9242d3df14cad2f94</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files/tmr2.c</file>
-         <hash>e22ba9e89686b083e2eb68a1abeb987b7e9577795c97a46d5718ae5b78746a97</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files/oc2.h</file>
-         <hash>11475a59eba73ac1830569b9e6934243b9f5886631be7c30d9ecd4d64ef7efdc</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files/tmr3.c</file>
-         <hash>2b8e223dfa162253104cdaaf8ea66daa07f70790b278b011a6cc3e979da3ac72</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files/traps.c</file>
-         <hash>72506e6b60431a75baa8565dc898f81affa81e0555095f90dccd7a945d6c9e2e</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files/ic2.c</file>
+         <file>mcc_generated_files\ic2.c</file>
          <hash>c39f70930345a4b0cfee9adadc3324eeb7d9e14b14e24871e1a478df98141ffd</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files/oc1.h</file>
-         <hash>282a639d4a4d22480e942630d3d776b5ca9aefec600d1ae7b4817d4a719751b2</hash>
+         <file>mcc_generated_files\uart2.h</file>
+         <hash>2d5da4ee57f09cdf19eb88f11113721da189d4fac4fdb598e99ea50f5a8cecdc</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files/ic1.c</file>
+         <file>mcc_generated_files\ic1.c</file>
          <hash>914b2765fdfa24b713fb30ba837237dd4f3bdbb30cb581b31810cef00dd2b54c</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files/mcc.h</file>
-         <hash>ca7d8400e7b7e1e9e6c558674ef0e3ff73021e57054f9ec87af4411bdfe9fab1</hash>
+         <file>mcc_generated_files\uart1.h</file>
+         <hash>59cf6f35cf05ae4db464f696dc4012dd6d6bd34e73da570a2a1af5774a151b02</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files/interrupt_manager.c</file>
-         <hash>ecee464d748d102d44a46bafb65fb878c0008cb5013a02b16e82e6674e5ebf17</hash>
-      </entry>
-      <entry>
-         <file>mcc_generated_files/uart1.c</file>
+         <file>mcc_generated_files\uart1.c</file>
          <hash>0ac92243a5e130e64f300f15eee18df012f83656b2ca5f63477c4ee3d20a4c36</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files/mcc.c</file>
-         <hash>149ef0c11c148577998de9a9d9ff8289b80098c93837e8311374d31f08575e22</hash>
+         <file>mcc_generated_files\tmr3.h</file>
+         <hash>5eb328618dc0d8432e4558302c106f7b30336edd3c30deebf7e5f986b1d59cf7</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files/uart2.c</file>
+         <file>mcc_generated_files\tmr2.h</file>
+         <hash>37039fe858b92666cb1d72081a3c6b1fecea1881d96c1c08ec5cd7044ccdf1c6</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\uart2.c</file>
          <hash>20ec956369cab1ccfe037ccc93707eb50f03a6e166c4f2e73e4128b7c2e19365</hash>
       </entry>
       <entry>
-         <file>mcc_generated_files/pin_manager.c</file>
+         <file>mcc_generated_files\tmr2.c</file>
+         <hash>e22ba9e89686b083e2eb68a1abeb987b7e9577795c97a46d5718ae5b78746a97</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\pin_manager.h</file>
+         <hash>da0d82bd5632456c91196e6dfeddac2b7e0ef58f22034195ef494cdda9487d98</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\tmr3.c</file>
+         <hash>2b8e223dfa162253104cdaaf8ea66daa07f70790b278b011a6cc3e979da3ac72</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\ic2.h</file>
+         <hash>fb41b2f1bcea4276219b96c8878bcab76c48af87bc09e23981d8e81439416504</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\oc1.h</file>
+         <hash>282a639d4a4d22480e942630d3d776b5ca9aefec600d1ae7b4817d4a719751b2</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\ic1.h</file>
+         <hash>396f051b208cc9c89a28b7429bf810ff00b17a2bcb7742eb2c9b885182175f4f</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\oc2.h</file>
+         <hash>11475a59eba73ac1830569b9e6934243b9f5886631be7c30d9ecd4d64ef7efdc</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\pin_manager.c</file>
          <hash>85f35fb365f9e8a9422a678e521f9537cc6a8dcfd6b158854f28c52bb6ee6d02</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\oc2.c</file>
+         <hash>023080c03ef46574b44e19075e43d3eaea26b170e0572af9242d3df14cad2f94</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\traps.c</file>
+         <hash>72506e6b60431a75baa8565dc898f81affa81e0555095f90dccd7a945d6c9e2e</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\oc1.c</file>
+         <hash>5561f41fca8f5e9cfa51036b84dcce501b6cbf6f79aba9dd6067817426313af5</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\traps.h</file>
+         <hash>da69f031f7e8895daf9a01e8df5ea04551c1fbb4555cf47cb0260b64f8fb7bf1</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\interrupt_manager.c</file>
+         <hash>ecee464d748d102d44a46bafb65fb878c0008cb5013a02b16e82e6674e5ebf17</hash>
+      </entry>
+      <entry>
+         <file>mcc_generated_files\mcc.c</file>
+         <hash>149ef0c11c148577998de9a9d9ff8289b80098c93837e8311374d31f08575e22</hash>
       </entry>
    </generatedFileHashHistoryMap>
 </config>

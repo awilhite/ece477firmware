@@ -10,9 +10,9 @@ CND_CONF=default
 CND_DISTDIR=dist
 TMPDIR=build/${CND_CONF}/${IMAGE_TYPE}/tmp-packaging
 TMPDIRNAME=tmp-packaging
-OUTPUT_PATH=dist/${CND_CONF}/${IMAGE_TYPE}/senior_design.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
-OUTPUT_BASENAME=senior_design.X.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
-PACKAGE_TOP_DIR=seniordesign.x/
+OUTPUT_PATH=dist/${CND_CONF}/${IMAGE_TYPE}/ece477firmware-master.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
+OUTPUT_BASENAME=ece477firmware-master.${IMAGE_TYPE}.${OUTPUT_SUFFIX}
+PACKAGE_TOP_DIR=ece477firmware-master/
 
 # Functions
 function checkReturnCode
@@ -57,15 +57,15 @@ mkdir -p ${TMPDIR}
 
 # Copy files and create directories and links
 cd "${TOP}"
-makeDirectory ${TMPDIR}/seniordesign.x/bin
+makeDirectory ${TMPDIR}/ece477firmware-master/bin
 copyFileToTmpDir "${OUTPUT_PATH}" "${TMPDIR}/${PACKAGE_TOP_DIR}bin/${OUTPUT_BASENAME}" 0755
 
 
 # Generate tar file
 cd "${TOP}"
-rm -f ${CND_DISTDIR}/${CND_CONF}/package/seniordesign.x.tar
+rm -f ${CND_DISTDIR}/${CND_CONF}/package/ece477firmware-master.tar
 cd ${TMPDIR}
-tar -vcf ../../../../${CND_DISTDIR}/${CND_CONF}/package/seniordesign.x.tar *
+tar -vcf ../../../../${CND_DISTDIR}/${CND_CONF}/package/ece477firmware-master.tar *
 checkReturnCode
 
 # Cleanup

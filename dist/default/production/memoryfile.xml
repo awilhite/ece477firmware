@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project>
-  <executable name="dist/default/production/senior_design.X.production.elf">
+  <executable name="dist/default/production/ece477firmware-master.production.elf">
     <memory name="data">
       <units>bytes</units>
       <length>8192</length>
-      <used>634</used>
-      <free>7558</free>
+      <used>792</used>
+      <free>7400</free>
     </memory>
     <memory name="program">
       <units>bytes</units>
       <length>131322</length>
-      <used>9009</used>
-      <free>122313</free>
+      <used>10173</used>
+      <free>121149</free>
     </memory>
   </executable>
 </project>

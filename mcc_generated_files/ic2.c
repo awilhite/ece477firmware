@@ -79,7 +79,7 @@ void IC2_Initialize (void)
 
 void __attribute__ ((weak)) IC2_CallBack(void)
 {
-    // Add your custom callback code here
+    
 }
 
 void __attribute__ ( ( interrupt, no_auto_psv ) ) _ISR _IC2Interrupt( void )

@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=senior_design.X
+PROJECTNAME=ece477firmware-master
 
 # Active Configuration
 DEFAULTCONF=default
