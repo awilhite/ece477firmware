@@ -70,9 +70,9 @@ static uint16_t         gOC2Mode;
 void OC2_Initialize (void)
 {
     // OC2RS 207; 
-    OC2RS = 0x00CF;
+    OC2RS = 0x01A5;
     // OC2R 207; 
-    OC2R = 0x00CF;
+    OC2R = 0x0000;
     // OCSIDL disabled; OCM PWM mode on OC, Fault pin is disabled; OCTSEL TMR3; 
     OC2CON = 0x000E;
 	

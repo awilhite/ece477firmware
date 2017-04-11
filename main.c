@@ -142,7 +142,12 @@ unsigned int motor_state = 1;
 unsigned int time_ref = 0;
 unsigned int mark = 0;
 unsigned int space = 0;
+
 unsigned int ir_received = 0;
+unsigned int ir_success = 0;
+unsigned int ir_error = 0;
+unsigned int ir_done = 0;
+
 unsigned int x = 0;
 unsigned int y = 0;
 unsigned int send_at = 0;
@@ -157,16 +162,24 @@ unsigned int ir_addr = 0;
 unsigned int ir_addrc = 0;
 unsigned int ir_comm = 0;
 unsigned int ir_commc = 0;
+unsigned int ir_wait = 0;
+
 unsigned int exp_count = 0; 
+unsigned int timarr[67] = {0};
+unsigned int timind = 0;
+
+unsigned int shot_data [32];
+//unsigned int fif_ind = 0;
 //unsigned long exp_ans = 0;
 
 unsigned int done = 0;// flag for when the ir data received is complete 
 
 unsigned int ic1_callback = 0;
 unsigned int ic1_count = 0;
+unsigned int ic1_flag = 0;
 char ic1_str[6];
 
-unsigned int store_buffer[72];
+//unsigned int store_buffer[72];
 
 
 // Function Declarations
@@ -176,9 +189,28 @@ void esp_println(char *);
 void IO_Initialize(void);
 int power2(int);
 void parse(unsigned int[32]);
+void irl(void);
+
+void send_mark(void);
+void send_space(void);
+void ir_shot(unsigned int[32]);
+//void event_fifo(unsigned int);
 
 
 // Function Definitions
+//void event_fifo(int new_stamp, int dir){
+//    if(dir){
+//        timarr[fif_ind] = new_stamp;
+//        fif_ind++;
+//        if(fif_ind > 7){
+//            LED_D6_LAT = LED_ON;
+//        }
+//    }
+//}
+void ir_shot(unsigned int data[32]){
+    
+}
+
 void parse (unsigned int packet[32]){
     int p_cnt = 0;
     ir_addr = 0;
@@ -326,127 +358,125 @@ void TMR2_CallBack(void)
     }
 }
 
+
+
 void IC2_CallBack(void)
 {
-    ic1_callback = ~ic1_callback;
+    ic1_callback = !ic1_callback;
 }
 
 void IC1_CallBack(void)
 {
-    ic1_callback = ~ic1_callback;
-    
-    ic1_count++;
-    
-    store_buffer[ic1_count] = IC1_LAT;
-    
+    ic1_callback = !ic1_callback;
+    if(!ir_wait){
+        if(ic1_count == 0){
+            time_ref = 0;
+        }
+        timarr[ic1_count] = time_ref;
+        ic1_count++;
+    }
+    if(ic1_count>66){
+        ir_received = 1; //set the flag for main
+        ir_wait = 1;     //prevent new samples from being written
+        ic1_count = 0;
+        garbage = time_ref;
+    }
+}
+
+void irl(void)
+{
     
     switch(ir_state)
     {
         case IR_IDLE:        
-            //if (!IC1_LAT) { // falling edge
-                time_ref = 0;
-                x = time_ref;
+                //time_ref = 0;
+                //ic1_count = 0;
+                timind = 0;
+                x = timarr[0];
                 comm_cnt = 0;
                 ir_state = IR_HEADER_HI;
-            //}
-            //else {
-            //    ir_state = IR_IDLE;
-            //}
+            
             break;
         case IR_HEADER_HI:
+            timind++;
+            y = timarr[timind];
+            if (abs(y - x - (HEADER_MARK)) < CUSHION) {
+                ir_state = IR_HEADER_LO;
+            }
+            else {    
+                ir_state = IR_IDLE;
+                ir_error = 1;
+            }
             
-            //if (!IC1_LAT) { // rising edge
-                y = time_ref;
-                if (abs(y - x - (HEADER_MARK)) < CUSHION) {
-                    ir_state = IR_HEADER_LO;
-                }
-                else {    
-                    ir_state = IR_IDLE;
-                }
-            //}
-            //else {
-            //    ir_state = IR_HEADER_HI;
-            //}
             break;
         case IR_HEADER_LO: 
-            //if (!IC1_LAT){
-                x = time_ref;
-                if (abs(x - y - (HEADER_SPACE)) < CUSHION) {
-                    ir_state = IR_HEADER_DONE;
-                }
-                else {  
-                    ir_state = IR_IDLE;
-                }
-            //} 
-            //else {
-            //    ir_state = IR_HEADER_LO;
-            //}
+            timind++;
+            x = timarr[timind];
+            if (abs(x - y - (HEADER_SPACE)) < CUSHION) {
+                ir_state = IR_HEADER_DONE;
+            }
+            else {  
+                ir_state = IR_IDLE;
+                ir_error = 1;
+            }
+                
             break;
         case IR_HEADER_DONE: 
-            //if (IC1_LAT) {
-                y = time_ref;
-                if (abs(y - x - (DATA_MARK)) < CUSHION){
-                    ir_state = IR_DATA_LO;
-                }
-                else {  
-                    ir_state = IR_IDLE;
-                }
-            //}
-            //else {
-            //    ir_state = IR_HEADER_DONE;
-            //}
+            timind++;
+            y = timarr[timind];
+            if (abs(y - x - (DATA_MARK)) < CUSHION){
+                ir_state = IR_DATA_LO;
+            }
+            else {  
+                ir_state = IR_IDLE;
+                ir_error = 1;
+            }
+            
             break;
         case IR_DATA_LO: 
-            //if (IC1_LAT) {
-                x = time_ref;
-                if (abs(x - y - (ZERO_SPACE)) < CUSHION) {
-                    ir_data[comm_cnt] = 0;
-                    
-                    
-                } else if (abs(x - y - (ONE_SPACE)) < CUSHION) {
-                    ir_data[comm_cnt] = 1;
-                    //ir_val = ir_val + power2(31-comm_cnt);
-                    
-                }
-                else {  
-                    comm_cnt = 0;
-                    ir_state = IR_IDLE;    
-                    break;
-                }
+            timind++;
+            x = timarr[timind];
+            if (abs(x - y - (ZERO_SPACE)) < CUSHION) {
+                ir_data[comm_cnt] = 0;
                 comm_cnt++;
-                if(comm_cnt == 32){
-                    ir_state = IR_IDLE;
-                    ir_received = 1;
-                }
-                else 
-                {
-                    ir_state = IR_DATA_HI;
-                }
-                
-            //}
-            //else {
-            //    ir_state = IR_DATA_LO;
-            //}
+
+            } else if (abs(x - y - (ONE_SPACE)) < CUSHION) {
+                ir_data[comm_cnt] = 1;
+                comm_cnt++;
+                //ir_val = ir_val + power2(31-comm_cnt);
+
+            }
+            else {  
+                comm_cnt = 0;
+                ir_state = IR_IDLE;  
+                ir_error = 1;
+            }
+            if(comm_cnt == 32){
+                ir_state = IR_IDLE;
+                ir_success = 1;
+            }
+            else 
+            {
+                ir_state = IR_DATA_HI;
+            }
             
             
             break;
         case IR_DATA_HI: 
-            //if (IC1_LAT) {
-                y = time_ref;
-                if (abs(y - x - (DATA_MARK)) < CUSHION) {
-                    ir_state = IR_DATA_LO;
-                }
-                else {  
-                    ir_state = IR_IDLE;
-                }
-            //}
-            //else {
-            //    ir_state = IR_DATA_HI;
-            //}
+            timind++;
+            y = timarr[timind];
+            if (abs(y - x - (DATA_MARK)) < CUSHION) {
+                ir_state = IR_DATA_LO;
+            }
+            else {  
+                ir_state = IR_IDLE;
+                ir_error = 1;
+            }
+
             break;
     }
+    return;
 }
-
 /*
                          Main application
  */
@@ -464,7 +494,40 @@ int main(void)
     while (1)
     {
         LED_D9_LAT = ic1_callback;
-        //LED_D8_LAT = 1;//done;
+
+        if (ir_received)
+        {   // Incoming hit from vehicle
+            
+            // data = infrared_verify(&buffer)
+            // 
+            // send_hit(data)
+            ir_state = IR_IDLE;
+            
+            while (!ir_success && !ir_error){
+                irl();
+            }
+            
+            if(ir_success){
+                parse(ir_data);
+                LED_D7_LAT = LED_OFF;  
+                if(ir_addr == 0x0020){
+                    if(ir_comm == 0x00A8){
+                        LED_D8_LAT = 1;
+                    } else {
+                        LED_D8_LAT = 0;
+                    }
+                }
+            } else {
+                LED_D7_LAT = LED_ON;
+            } 
+            
+            ir_received = 0;
+            ir_success = 0;
+            ir_error = 0;
+            ir_wait = 0;     
+            //ic1_count = 0;
+        }
+                //LED_D8_LAT = 1;//done;
         
         // Button 3
         if (button_pressed)
@@ -525,25 +588,10 @@ int main(void)
             // do_command(buffer_read))
             // send response
         }*/
-        
-        if (ir_received)
-        {   // Incoming hit from vehicle
-            
-            // data = infrared_verify(&buffer)
-            // 
-            // send_hit(data)
-            
-            LED_D7_LAT = !LED_D7_LAT;
-            parse(ir_data);
-            ir_received = 0;
-            if(ir_addr == 0x0020){
-                if(ir_comm == 0x00A8){
-                    LED_D8_LAT = 1;
-                } else {
-                    LED_D8_LAT = 0;
-                }
-            }
-        }
+        /*if (ic1_flag){
+            irl();
+            ic1_flag = 0;
+        }*/
         
     }
 
