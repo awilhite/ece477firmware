@@ -53,15 +53,6 @@
 */
 void INTERRUPT_Initialize (void)
 {
-    //    UERI: U2E - UART2 Error
-    //    Priority: 1
-        IPC16bits.U2ERIP = 1;
-    //    UTXI: U2TX - UART2 Transmitter
-    //    Priority: 1
-        IPC7bits.U2TXIP = 1;
-    //    URXI: U2RX - UART2 Receiver
-    //    Priority: 1
-        IPC7bits.U2RXIP = 1;
     //    UERI: U1E - UART1 Error
     //    Priority: 1
         IPC16bits.U1ERIP = 1;
@@ -74,9 +65,15 @@ void INTERRUPT_Initialize (void)
     //    ICI_INT: IC1 - Input Capture 1
     //    Priority: 1
         IPC0bits.IC1IP = 1;
+    //    ICI_INT: IC3 - Input Capture 3
+    //    Priority: 1
+        IPC9bits.IC3IP = 1;
     //    ICI_INT: IC2 - Input Capture 2
     //    Priority: 1
         IPC1bits.IC2IP = 1;
+    //    ICI_INT: IC4 - Input Capture 4
+    //    Priority: 1
+        IPC9bits.IC4IP = 1;
     //    OCI: OC1 - Output Compare 1
     //    Priority: 1
         IPC0bits.OC1IP = 1;

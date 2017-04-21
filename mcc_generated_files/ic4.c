@@ -1,18 +1,18 @@
 
 /**
-  OC2 Generated Driver API Source File
+  IC4 Generated Driver API Source File
 
   @Company
     Microchip Technology Inc.
 
   @File Name
-    oc2.c
+    ic4.c
 
   @Summary
-    This is the generated source file for the OC2 driver using MPLAB(c) Code Configurator
+    This is the generated source file for the IC4 driver using MPLAB(c) Code Configurator
 
   @Description
-    This source file provides APIs for driver for OC2.
+    This source file provides APIs for driver for IC4.
     Generation Information :
         Product Revision  :  MPLAB(c) Code Configurator - pic24-dspic-pic32mm : v1.25
         Device            :  PIC24FJ128GA010
@@ -43,130 +43,73 @@
     MICROCHIP PROVIDES THIS SOFTWARE CONDITIONALLY UPON YOUR ACCEPTANCE OF THESE
     TERMS.
 */
-
 /**
   Section: Included Files
 */
 #include <xc.h>
-#include "oc2.h"
+#include "ic4.h"
 
-/** OC Mode.
+/**
+  IC Mode.
 
   @Summary
-    Defines the OC Mode.
+    Defines the IC Mode.
 
   @Description
-    This data type defines the OC Mode of operation.
+    This data type defines the IC Mode of operation.
 
 */
 
-static uint16_t         gOC2Mode;
+static uint16_t         gIC4Mode;
 
 /**
   Section: Driver Interface
 */
 
-
-void OC2_Initialize (void)
+void IC4_Initialize (void)
 {
-    // OC2RS 207; 
-    OC2RS = 0x0000;
-    // OC2R 207; 
-    OC2R = 0x0000;
-    // OCSIDL disabled; OCM PWM mode on OC, Fault pin is disabled; OCTSEL TMR3; 
-    OC2CON = 0x000E;
-	
-    gOC2Mode = OC2CONbits.OCM;
+    // ICSIDL disabled; ICM Edge Detect Capture; ICTMR TMR2; ICI Every; 
+    IC4CON = 0x0081;
+    
+    gIC4Mode = IC4CONbits.ICM;
+    
+    IFS2bits.IC4IF = false;
+    IEC2bits.IC4IE = true;
 }
 
 
-
-void OC2_Tasks( void )
+void __attribute__ ( ( interrupt, no_auto_psv ) ) _ISR _IC4Interrupt( void )
 {
-    if(IFS0bits.OC2IF)
+    if(IFS2bits.IC4IF)
     {
-        IFS0bits.OC2IF = 0;
+        IFS2bits.IC4IF = 0;
     }
 }
-
-
-
-void OC2_Start( void )
+void IC4_Start( void )
 {
-    OC2CONbits.OCM = gOC2Mode;
+    IC4CONbits.ICM = gIC4Mode;
+}
+
+void IC4_Stop( void )
+{
+    IC4CONbits.ICM = 0;
+}
+
+uint16_t IC4_CaptureDataRead( void )
+{
+    return(IC4BUF);
+}
+
+bool IC4_HasCaptureBufferOverflowed( void )
+{
+    return( IC4CONbits.ICOV );
 }
 
 
-void OC2_Stop( void )
+bool IC4_IsCaptureBufferEmpty( void )
 {
-    OC2CONbits.OCM = 0;
+    return( ! IC4CONbits.ICBNE );
 }
-
-
-void OC2_SingleCompareValueSet( uint16_t value )
-{
-    OC2R = value;
-}
-
-
-void OC2_DualCompareValueSet( uint16_t priVal, uint16_t secVal )
-{
-    OC2R = priVal;
-	
-    OC2RS = secVal;
-}
-
-
-void OC2_CentreAlignedPWMConfig( uint16_t priVal, uint16_t secVal )
-{
-    OC2R = priVal;
-	
-    OC2RS = secVal;
-}
-
-void OC2_EdgeAlignedPWMConfig( uint16_t priVal, uint16_t secVal )
-{
-    OC2R = priVal;
-	
-    OC2RS = secVal;
-}
-
-void OC2_SecondaryValueSet( uint16_t secVal )
-{
-   
-    OC2RS = secVal;
-}
-
-
-void OC2_PrimaryValueSet( uint16_t priVal )
-{
-   
-    OC2R = priVal;
-}
-
-bool OC2_IsCompareCycleComplete( void )
-{
-    return(IFS0bits.OC2IF);
-}
-
-
-bool OC2_FaultStatusGet( OC2_FAULTS faultNum )
-{
-    bool status;
-    /* Return the status of the fault condition */
-   
-    switch(faultNum)
-    { 
-        case OC2_FAULT0:status = OC2CONbits.OCFLT;
-            break;
-        default :
-            break;
-
-    }
-    return(status);
-}
-
-
 
 /**
  End of File

@@ -51,14 +51,16 @@
 #include <stdbool.h>
 #include "traps.h"
 #include "interrupt_manager.h"
-#include "tmr3.h"
-#include "tmr2.h"
-#include "uart2.h"
-#include "uart1.h"
 #include "ic2.h"
 #include "ic1.h"
-#include "oc1.h"
+#include "ic4.h"
+#include "tmr2.h"
+#include "uart1.h"
+#include "uart2.h"
+#include "ic3.h"
 #include "oc2.h"
+#include "oc1.h"
+#include "tmr3.h"
 
 #define _XTAL_FREQ  32000000UL
 

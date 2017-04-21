@@ -1,4 +1,4 @@
-/**
+ /**
   Generated Main Source File
 
   Company:
@@ -128,8 +128,18 @@ enum {
     IR_DATA_LO,
 } ir_state;
 
-unsigned int count = 0;
+enum {
+    IR_IDLE_O,
+    IR_HEADER_HI_O,
+    IR_HEADER_LO_O,
+    IR_HEADER_DONE_O,
+    IR_DATA_HI_O,
+    IR_DATA_LO_O,
+} ir_state_o;
 
+// Button Debounce
+
+unsigned int count = 0;
 unsigned int button_cnt = 0;
 unsigned int button_state = 0;
 unsigned int button_pressed = 0;
@@ -139,10 +149,11 @@ unsigned int mbutton_pressed = 0;
 
 unsigned int motor_state = 1;
 
-unsigned int time_ref = 0;
-unsigned int mark = 0;
-unsigned int space = 0;
+// Receive IR
 
+unsigned int time_ref = 0;
+
+unsigned int hit_received = 0;  //SET THIS FLAG FOR HIT (then clear once sent)
 unsigned int ir_received = 0;
 unsigned int ir_success = 0;
 unsigned int ir_error = 0;
@@ -150,36 +161,47 @@ unsigned int ir_done = 0;
 
 unsigned int x = 0;
 unsigned int y = 0;
-unsigned int send_at = 0;
-unsigned int send_response = 0;
-unsigned int buffer_size;
-
-uint8_t buffer_read[READ_BUF_LEN];
 
 unsigned int comm_cnt = 0;
+
 unsigned int ir_data[32];
 unsigned int ir_addr = 0;
 unsigned int ir_addrc = 0;
 unsigned int ir_comm = 0;
 unsigned int ir_commc = 0;
 unsigned int ir_wait = 0;
+unsigned int error_watch = 0;
+unsigned int ir_progress_flag = 0;
 
 unsigned int exp_count = 0; 
 unsigned int timarr[67] = {0};
+unsigned int timarr2[67] = {0};
 unsigned int timind = 0;
 
-unsigned int shot_data [32];
-//unsigned int fif_ind = 0;
-//unsigned long exp_ans = 0;
+// Send IR
 
-unsigned int done = 0;// flag for when the ir data received is complete 
+unsigned int shot_data [32] =   {0,0,1,0,0,0,0,0,
+                                1,1,0,1,1,1,1,1,
+                                0,0,0,1,0,0,0,0,
+                                1,1,1,0,1,1,1,1};
+unsigned int ir_send;
+unsigned int ir_shot_flag;
+unsigned int timindo = 0;
+unsigned int comm_cnto = 0;
 
+
+// IR interrupt signals
 unsigned int ic1_callback = 0;
 unsigned int ic1_count = 0;
 unsigned int ic1_flag = 0;
-char ic1_str[6];
+unsigned int ic2_count = 0;
+unsigned int ic2_flag = 0;
+unsigned int ic3_count = 0;
+unsigned int ic3_flag = 0;
+unsigned int ic4_count = 0;
+unsigned int ic4_flag = 0;
 
-//unsigned int store_buffer[72];
+
 
 
 // Function Declarations
@@ -187,69 +209,16 @@ char ic1_str[6];
 void println(char *);
 void esp_println(char *);
 void IO_Initialize(void);
+
+void IR_Initialize(void);
+
 int power2(int);
 void parse(unsigned int[32]);
 void irl(void);
 
-void send_mark(void);
-void send_space(void);
-void ir_shot(unsigned int[32]);
-//void event_fifo(unsigned int);
+void ir_shot(void);
 
-
-// Function Definitions
-//void event_fifo(int new_stamp, int dir){
-//    if(dir){
-//        timarr[fif_ind] = new_stamp;
-//        fif_ind++;
-//        if(fif_ind > 7){
-//            LED_D6_LAT = LED_ON;
-//        }
-//    }
-//}
-void ir_shot(unsigned int data[32]){
-    
-}
-
-void parse (unsigned int packet[32]){
-    int p_cnt = 0;
-    ir_addr = 0;
-    ir_comm = 0;
-    ir_addrc = 0;
-    ir_commc = 0;
-    while(p_cnt < 32){
-        if(p_cnt < 8)
-        {
-            ir_addr = ir_addr + (packet[p_cnt] * power2(7-(p_cnt - 0)));
-        }
-        else if(p_cnt < 16)
-        {
-            ir_addrc = ir_addrc + (packet[p_cnt] * power2(7-(p_cnt - 8)));
-        }
-        else if(p_cnt < 24)
-        {
-            ir_comm = ir_comm + (packet[p_cnt] * power2(7-(p_cnt - 16)));
-        }
-        else
-        {
-            ir_commc = ir_commc + (packet[p_cnt] * power2(7-(p_cnt - 24)));
-        }
-        p_cnt++;
-    }
-    return; 
-}
-
-
-int power2(int exp)
-{
-    int exp_ans = 1;
-    while(exp)
-    {
-        exp_ans = exp_ans * 2;
-        exp--;
-    }
-    return exp_ans;
-}
+//FUNCTIONS BEGIN
 
 void println(char * str)
 {
@@ -260,8 +229,8 @@ void println(char * str)
         length++;
     }
     
-    UART2_WriteBuffer((uint8_t *) str, length);
-    UART2_WriteBuffer((uint8_t *) "\r\n", (uint8_t) 2);
+    //UART2_WriteBuffer((uint8_t *) str, length);
+    //UART2_WriteBuffer((uint8_t *) "\r\n", (uint8_t) 2);
 }
 
 void esp_println(char * str)
@@ -270,7 +239,7 @@ void esp_println(char * str)
     
     while (str[length] != '\0')
     {
-        length++;
+        length++; 
     }
     
     UART1_WriteBuffer((uint8_t *) str, length);
@@ -307,80 +276,145 @@ void IO_Initialize(void)
     IC5_TRIS = INPUT;
 }
 
-void TMR2_CallBack(void)
+void IR_Initialize(void)
 {
-    // 40us period
-    
-    time_ref++;
-    count++;
-    
-    // 1ms period
-    
-    if (count % 25 == 0)
-    {
-        // Button 3
-        if (S3_PORT == BUTTON_PRESSED && !button_state)
-        { // button pressed now but wasn't before
-            button_state = 1;
-        }
-        else if (S3_PORT == BUTTON_NOT_PRESSED && button_state)
-        { // button was pressed, but it's not anymore
-            button_state = 0;
-            button_pressed = 1;
-        }
-        
-        // Button 6
-        if (S6_PORT == BUTTON_PRESSED && !mbutton_state)
-        { // button pressed now but wasn't before
-            mbutton_state = 1;
-        }
-        else if (S6_PORT == BUTTON_NOT_PRESSED && mbutton_state)
-        { // button was pressed, but it's not anymore
-            mbutton_state = 0;
-            mbutton_pressed = 1;
-        }
+    time_ref = 0;
+
+    ir_received = 0;
+    ir_success = 0;
+    ir_error = 0;
+    ir_done = 0;
+
+    x = 0;
+    y = 0;
+
+    comm_cnt = 0;
+    //ir_data[32]
+    ir_addr = 0;
+    ir_addrc = 0;
+    ir_comm = 0;
+    ir_commc = 0;
+    ir_wait = 0;
+
+    exp_count = 0; 
+    unsigned int i;
+    for(i=0;i<67;i++){
+        timarr[i] = 0;
     }
     
-    // 0.4s period
-    
-    if (count == 10000)
-    {
-        LED_D5_LAT = LED_ON;
+    for(i=0;i<32;i++){
+        ir_data[i] = 0;
     }
-    
-    // 0.8s period
-    
-    else if (count == 20000)
-    {
-        LED_D5_LAT = LED_OFF;
-        count = 0;
-        //send_at = 1;
-    }
+    timind = 0;
+
+    // Send IR
+
+    //shot_data [32] = {0};
+    ir_send = 0;
+
+    ic1_callback = 0;
+    ic1_count = 0;
+    ic1_flag = 0;
+    ic2_count = 0;
+    ic2_flag = 0;
+    ic3_count = 0;
+    ic3_flag = 0;
+    ic4_count = 0;
+    ic4_flag = 0;
 }
 
+void ir_shot(void){
+    //OC2_Start();
+    switch(ir_state_o)
+    {
+        case IR_IDLE_O:        
 
+            OC2_Start();
+            ir_state_o = IR_HEADER_HI_O;
+            timindo = 0;
+            OC2RS = 0x00D3;
+            
+            break;
+        case IR_HEADER_HI_O:
+            timindo++;
+            
+            if (timindo >= (HEADER_MARK/14)) {
+                ir_state_o = IR_HEADER_LO_O;
+                timindo = 0;
+                OC2RS = 0x0000;
+            } 
+            else {    
+                ir_state_o = IR_HEADER_HI_O;
+            }
+            break;
+            
+        case IR_HEADER_LO_O: 
+            timindo++;
+            if (timindo >= (HEADER_SPACE/14)) {
+                ir_state_o = IR_HEADER_DONE_O;
+                timindo = 0;
+                OC2RS = 0x00D3;
+            }
+            else {  
+                ir_state_o = IR_HEADER_LO_O;
+            }
+                
+            break;
+        case IR_HEADER_DONE_O: 
+            timindo++;
+            if (timindo >= (DATA_MARK/14)){
+                ir_state_o = IR_DATA_LO_O;
+                timindo = 0;
+                OC2RS = 0x0000;
+            }
+            else {  
+                ir_state_o = IR_HEADER_DONE_O;
+            }            
+            
+            break;
+        case IR_DATA_LO_O: 
+            timindo++;
+            ir_state_o = IR_DATA_LO_O;
+            if (shot_data[comm_cnto] == 0){
+                if(timindo >= (ZERO_SPACE/14)) {
+                    comm_cnto++;
+                    ir_state_o = IR_DATA_HI_O;
+                    timindo = 0;
+                    OC2RS = 0x00D3;
+                }
+            } else if (shot_data[comm_cnto] == 1){
+                if(timindo >= (ONE_SPACE/14)) {
+                    comm_cnto++;
+                    ir_state_o = IR_DATA_HI_O;
+                    timindo = 0;
+                    OC2RS = 0x00D3;
+                }
+            }
+                      
+            break;
+        case IR_DATA_HI_O: 
+            timindo++;
+            
+            if (timindo >= (DATA_MARK/14)) {
+                if(comm_cnto == 32){
+                    ir_state_o = IR_IDLE_O;
+                    ir_shot_flag = 0; //ir_shot_flag
+                    comm_cnto = 0;
+                    OC2RS = 0x0000;
+                    OC2_Stop();
+                } else {
+                    ir_state_o = IR_DATA_LO_O;
+                    timindo = 0;
+                    OC2RS = 0x0000;
+                }
+            }
+            else {  
+                ir_state_o = IR_DATA_HI_O;
+            }
 
-void IC2_CallBack(void)
-{
-    ic1_callback = !ic1_callback;
-}
-
-void IC1_CallBack(void)
-{
-    ic1_callback = !ic1_callback;
-    if(!ir_wait){
-        if(ic1_count == 0){
-            time_ref = 0;
-        }
-        timarr[ic1_count] = time_ref;
-        ic1_count++;
+            break;
     }
-    if(ic1_count>66){
-        ir_received = 1; //set the flag for main
-        ir_wait = 1;     //prevent new samples from being written
-        ic1_count = 0;
-        garbage = time_ref;
-    }
+    
 }
 
 void irl(void)
@@ -477,6 +511,200 @@ void irl(void)
     }
     return;
 }
+
+void parse (unsigned int packet[32]){
+    int p_cnt = 0;
+    ir_addr = 0;
+    ir_comm = 0;
+    ir_addrc = 0;
+    ir_commc = 0;
+    while(p_cnt < 32){
+        if(p_cnt < 8)
+        {
+            ir_addr = ir_addr + (packet[p_cnt] * power2(7-(p_cnt - 0)));
+        }
+        else if(p_cnt < 16)
+        {
+            ir_addrc = ir_addrc + (packet[p_cnt] * power2(7-(p_cnt - 8)));
+        }
+        else if(p_cnt < 24)
+        {
+            ir_comm = ir_comm + (packet[p_cnt] * power2(7-(p_cnt - 16)));
+        }
+        else
+        {
+            ir_commc = ir_commc + (packet[p_cnt] * power2(7-(p_cnt - 24)));
+        }
+        p_cnt++;
+    }
+    return; 
+}
+
+int power2(int exp)
+{
+    int exp_ans = 1;
+    while(exp)
+    {
+        exp_ans = exp_ans * 2;
+        exp--;
+    }
+    return exp_ans;
+}
+
+void IC4_CallBack(void)
+{
+    if(!ir_wait && !ic1_flag && !ic2_flag && !ic3_flag){
+        if(ic4_count == 0){
+            time_ref = 0;
+            error_watch = 0;
+            ir_progress_flag = 1;
+            ic4_flag = 1;
+        }
+        timarr[ic4_count] = time_ref;
+        ic4_count++;
+    }
+    if(ic4_count>66){
+        ir_received = 1; //set the flag for main
+        ir_wait = 1;     //prevent new samples from being written
+        ic4_count = 0;
+        ir_progress_flag = 0;
+        ic4_flag = 0;
+    }
+}
+
+void IC3_CallBack(void)
+{
+    if(!ir_wait && !ic1_flag && !ic2_flag !ic4_flag){
+        if(ic3_count == 0){
+            time_ref = 0;
+            error_watch = 0;
+            ir_progress_flag = 1;
+            ic3_flag = 1;
+        }
+        timarr[ic3_count] = time_ref;
+        ic3_count++;
+    }
+    if(ic3_count>66){
+        ir_received = 1; //set the flag for main
+        ir_wait = 1;     //prevent new samples from being written
+        ic3_count = 0;
+        ir_progress_flag = 0;
+        ic3_flag = 0;
+    }
+}
+
+void IC2_CallBack(void)
+{
+    if(!ir_wait && !ic1_flag && !ic3_flag && !ic4_flag){
+        if(ic2_count == 0){
+            time_ref = 0;
+            error_watch = 0;
+            ir_progress_flag = 1;
+            ic2_flag = 1;
+        }
+        timarr[ic2_count] = time_ref;
+        ic2_count++;
+    }
+    if(ic2_count>66){
+        ir_received = 1; //set the flag for main
+        ir_wait = 1;     //prevent new samples from being written
+        ic2_count = 0;
+        ir_progress_flag = 0;
+        ic2_flag = 0;
+    }
+}
+
+void IC1_CallBack(void)
+{
+    ic1_callback = !ic1_callback;
+    
+    if(!ir_wait && !ic2_flag && !ic3_flag && !ic4_flag){
+        if(ic1_count == 0){
+            time_ref = 0;
+            error_watch = 0;
+            ir_progress_flag = 1;
+            ic1_flag = 1;
+        }
+        timarr[ic1_count] = time_ref;
+        ic1_count++;
+    }
+    if(ic1_count>66){
+        ir_received = 1; //set the flag for main
+        ir_wait = 1;     //prevent new samples from being written
+        ic1_count = 0;
+        ir_progress_flag = 0;
+        ic1_flag = 0;
+    }
+}
+
+void TMR2_CallBack(void)
+{
+    // 40us period
+    
+    time_ref++;
+    count++;
+    ir_send++;
+    
+    if(ir_progress_flag){
+        error_watch++;
+        if(error_watch > 2185){
+            unsigned int i;
+            for(i=0;i<67;i++){
+                timarr[i] = 0;
+            }
+            ir_progress_flag = 0;
+            ic1_count = 0;
+        }
+    }
+        
+    
+    // 1ms period
+    if (((ir_send % 14) == 0) && ir_shot_flag)
+    {
+        ir_shot();
+    }
+    
+    if (count % 25 == 0)
+    {
+        // Button 3
+        if (S3_PORT == BUTTON_PRESSED && !button_state)
+        { // button pressed now but wasn't before
+            button_state = 1;
+        }
+        else if (S3_PORT == BUTTON_NOT_PRESSED && button_state)
+        { // button was pressed, but it's not anymore
+            button_state = 0;
+            button_pressed = 1;
+        }
+        
+        // Button 6
+        if (S6_PORT == BUTTON_PRESSED && !mbutton_state)
+        { // button pressed now but wasn't before
+            mbutton_state = 1;
+        }
+        else if (S6_PORT == BUTTON_NOT_PRESSED && mbutton_state)
+        { // button was pressed, but it's not anymore
+            mbutton_state = 0;
+            mbutton_pressed = 1;
+        }
+    }
+    
+    // 0.4s period
+    
+    if (count == 10000)
+    {
+        LED_D5_LAT = LED_ON;
+    }
+    
+    // 0.8s period
+    
+    else if (count == 20000)
+    {
+        LED_D5_LAT = LED_OFF;
+        count = 0;
+    }
+}
+
 /*
                          Main application
  */
@@ -485,15 +713,18 @@ int main(void)
     // initialize the device
     SYSTEM_Initialize();
     IO_Initialize();
+    IR_Initialize();
     
     ir_state = IR_IDLE;
     
     println("Started");
     
+    //shot_data [32] =    
+    
     
     while (1)
     {
-        LED_D9_LAT = ic1_callback;
+         LED_D9_LAT = ic1_callback;
 
         if (ir_received)
         {   // Incoming hit from vehicle
@@ -508,24 +739,20 @@ int main(void)
             }
             
             if(ir_success){
-                parse(ir_data);
-                LED_D7_LAT = LED_OFF;  
+                parse(ir_data); 
                 if(ir_addr == 0x0020){
-                    if(ir_comm == 0x00A8){
-                        LED_D8_LAT = 1;
-                    } else {
-                        LED_D8_LAT = 0;
+                    if(ir_comm == 0x0010){  //A8 for 5, 10 for "power"
+                        hit_received = 1;
                     }
                 }
-            } else {
-                LED_D7_LAT = LED_ON;
-            } 
+            }              
             
-            ir_received = 0;
-            ir_success = 0;
-            ir_error = 0;
-            ir_wait = 0;     
+            //ir_received = 0;
+            //ir_success = 0;
+            //ir_error = 0;
+            //ir_wait = 0;     
             //ic1_count = 0;
+            IR_Initialize();
         }
                 //LED_D8_LAT = 1;//done;
         
@@ -533,19 +760,22 @@ int main(void)
         if (button_pressed)
         {
             button_pressed = 0;
-            button_cnt++;
-            
+            //button_cnt++;
+            ir_shot_flag = 1;
+            ir_send = 0;
+            ir_state_o = IR_IDLE_O;
+            //ir_shot(shot_data);
             // Motor PWM
-            OC1RS = ((button_cnt % 10) + 1)*64;
-            LED_D6_LAT = ~LED_D6_LAT;
+            //OC1RS = ((button_cnt % 10) + 1)*64;
+            //LED_D6_LAT = ~LED_D6_LAT;
         }
         
         // Button 6
         if (mbutton_pressed)
         {
             mbutton_pressed = 0;
-            
-            sprintf(ic1_str, "%d", ic1_count);
+            //ir_shot(shot_data);
+            //sprintf(ic1_str, "%d", ic1_count);
             
             // toggle motor on and off
             
@@ -561,38 +791,14 @@ int main(void)
                 LED_D4_LAT = LED_ON;
             }*/
             
-            println(ic1_str);
+            //println(ic1_str);
             
         }
         
         if (!UART1_TransmitBufferIsFull())
         {
             //esp_println("AT");
-        }
-        
-        /*if (!UART1_ReceiveBufferIsEmpty())
-        {   // response from esp8266
-            
-            // Read buffer because it has something
-            buffer_size = UART2_ReceiveBufferSizeGet();
-            
-            if (buffer_size > READ_BUF_LEN)
-            {
-                buffer_size = READ_BUF_LEN;
-            }
-            
-            UART1_ReadBuffer((uint8_t *) &buffer_read, buffer_size);
-            
-            println((char *) buffer_read);   // output result to serial terminal
-            
-            // do_command(buffer_read))
-            // send response
-        }*/
-        /*if (ic1_flag){
-            irl();
-            ic1_flag = 0;
-        }*/
-        
+        }        
     }
 
     return -1;
