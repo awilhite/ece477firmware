@@ -58,8 +58,8 @@ void UART2_Initialize(void)
      Set the UART2 module to the options selected in the user interface.
      Make sure to set LAT bit corresponding to TxPin as high before UART initialization
 */
-    // STSEL 1; IREN disabled; PDSEL 8N; UARTEN disabled; RTSMD disabled; USIDL disabled; WAKE disabled; ABAUD disabled; LPBACK disabled; BRGH enabled; RXINV disabled; UEN TX_RX; 
-    U2MODE = (0x0008 & ~(1<<15));  // disabling UARTEN bit   
+    // STSEL 1; IREN disabled; PDSEL 8N; UARTEN enabled; RTSMD disabled; USIDL disabled; WAKE disabled; ABAUD disabled; LPBACK disabled; BRGH enabled; RXINV disabled; UEN TX_RX; 
+    U2MODE = (0x8008 & ~(1<<15));  // disabling UARTEN bit   
     // UTXISEL0 TX_ONE_CHAR; UTXINV disabled; OERR NO_ERROR_cleared; URXISEL RX_ONE_CHAR; UTXBRK COMPLETED; UTXEN disabled; ADDEN disabled; 
     U2STA = 0x0000;
     // BaudRate = 115200; Frequency = 16000000 Hz; BRG 34; 

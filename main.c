@@ -71,6 +71,8 @@
 #define INPUT  1
 #define OUTPUT 0
 
+#define FAULT_CONDITION 1
+
 // DEFINE PIN NAMES
 
 #if DEV_BOARD
@@ -139,6 +141,12 @@
 #define RA5_TRIS        TRISAbits.TRISA5
 #define RA5_PORT        PORTAbits.RA5
 
+#define MTR_DRIVER_EN_TRIS  TRISEbits.TRISE2
+#define MTR_DRIVER_EN_LAT   LATEbits.LATE2
+
+#define MTR_DRIVER_NF_TRIS      TRISEbits.TRISE4
+#define MTR_DRIVER_NF_PORT      PORTEbits.RE4
+
 // Input Capture Register Bit Definitions
 
 #define IC1_TRIS        TRISDbits.TRISD8
@@ -167,6 +175,9 @@
 // MOTOR PARAMS
 
 #define MOTOR_PERIOD    0x280
+
+#define HIGH_CAL    0x0F
+#define LOW_CAL     0x0F
 
 /////////////////
 // DATA TYPES
@@ -289,6 +300,9 @@ void IO_Initialize(void)
     
     AIN1_TRIS = OUTPUT;
     BIN1_TRIS = OUTPUT;
+    
+    MTR_DRIVER_EN_TRIS = OUTPUT;
+    MTR_DRIVER_NF_TRIS = INPUT;
     
     LED_D5_TRIS = OUTPUT;
     
@@ -668,14 +682,14 @@ int power2(int exp)
 void IC4_CallBack(void)
 {
     if(!ir_wait && !ic1_flag && !ic2_flag && !ic3_flag){
-        if(ic4_count == 0){
-            time_ref = 0;
-            error_watch = 0;
-            ir_progress_flag = 1;
-            ic4_flag = 1;
-        }
-        timarr[ic4_count] = time_ref;
-        ic4_count++;
+    if(ic4_count == 0){
+        time_ref = 0;
+        error_watch = 0;
+        ir_progress_flag = 1;
+        ic4_flag = 1;
+    }
+    timarr[ic4_count] = time_ref;
+    ic4_count++;
     }
     if(ic4_count>66){
         ir_received = 1; //set the flag for main
@@ -733,14 +747,14 @@ void IC1_CallBack(void)
     ic1_callback = !ic1_callback;
     
     if(!ir_wait && !ic2_flag && !ic3_flag && !ic4_flag){
-        if(ic1_count == 0){
-            time_ref = 0;
-            error_watch = 0;
-            ir_progress_flag = 1;
-            ic1_flag = 1;
-        }
-        timarr[ic1_count] = time_ref;
-        ic1_count++;
+    if(ic1_count == 0){
+        time_ref = 0;
+        error_watch = 0;
+        ir_progress_flag = 1;
+        ic1_flag = 1;
+    }
+    timarr[ic1_count] = time_ref;
+    ic1_count++;
     }
     if(ic1_count>66){
         ir_received = 1; //set the flag for main
@@ -834,6 +848,7 @@ int ESP_Callback(ESP_Event_t evt, ESP_EventParams_t* params) {
     char resp_str[10];
     unsigned int speed;
     uint16_t period;
+    uint16_t calc_period;
     
     switch (evt) {                              /* Check events */
         case espEventIdle:
@@ -865,6 +880,15 @@ int ESP_Callback(ESP_Event_t evt, ESP_EventParams_t* params) {
                     printf("Raw Speed: %u \r\n", speed);
                     printf("Speed Percent: %d%% \r\n", toPercent(speed));
                     
+                    if (speed > 0xF8)
+                    {
+                        speed = 0xF8;
+                    }
+                    
+                    if (speed < 0x05)
+                    {
+                        speed = 0x05;
+                    }
                     
                     if (speed > 0x7F)
                     { // forward
@@ -894,14 +918,43 @@ int ESP_Callback(ESP_Event_t evt, ESP_EventParams_t* params) {
                     printf("Raw Speed: %u \r\n", speed);
                     printf("Speed Percent: %d%% \r\n", toPercent(speed));
                     
+                    if (speed > 0xF8)
+                    {
+                        speed = 0xF8;
+                    }
+                    
+                    if (speed < 0x05)
+                    {
+                        speed = 0x05;
+                    }
+                    
                     if (speed > 0x7F)
                     { // forward
+                        /*if (speed < 0x7F + LOW_CAL)
+                        {
+                            speed = 0x7F + LOW_CAL;
+                        }
+                        if (speed > 0xFF - HIGH_CAL)
+                        {
+                            speed = 0xFF - HIGH_CAL;
+                        }*/
+                        
                         speed = speed - 0x7F;
                         BIN1_LAT = REVERSE;
                         printf("Direction: forward\r\n");
                     }
-                    else
+                    else // speed < 0x7F
                     { // reverse
+                        
+                        /*if (speed < 0x7F - LOW_CAL)
+                        {
+                            speed = 0x7F - LOW_CAL;
+                        }
+                        if (speed < 0xFF - HIGH_CAL)
+                        {
+                            speed = 0xFF - HIGH_CAL;
+                        }*/
+                        
                         BIN1_LAT = FORWARD;
                         printf("Direction: reverse\r\n");
                     }
@@ -911,7 +964,8 @@ int ESP_Callback(ESP_Event_t evt, ESP_EventParams_t* params) {
                     printf("Period Register: %X\r\n", period);
                     espRes = ESP_CONN_Send(&ESP, conn, (const uint8_t *) "l received\r\n", sizeof("l received\r\n"), &bw, 0);
                 
-                    OC3RS = MOTOR_PERIOD - period;
+                    calc_period = MOTOR_PERIOD - period;
+                    OC3RS = calc_period;
                 }
                 else if (data[0] == 'c')
                 {
@@ -926,6 +980,7 @@ int ESP_Callback(ESP_Event_t evt, ESP_EventParams_t* params) {
                     
                     if (hit_received)
                     {
+                        hit_received = 0;
                         sprintf(resp_str, "h%d\r\n", VEHICLE_NUM);
                         espRes = ESP_CONN_Send(&ESP, conn, (const uint8_t *) resp_str, sizeof(resp_str), &bw, 0);
                     }
@@ -933,6 +988,7 @@ int ESP_Callback(ESP_Event_t evt, ESP_EventParams_t* params) {
                 else if (data[0] == 'f')
                 {
                     // received "fire"
+                    ir_shot_flag = 1;
                     printf("Data received: %s (%lu bytes)\r\n", (char *) data, (unsigned long) params->UI);
                     espRes = ESP_CONN_Send(&ESP, conn, (const uint8_t *) "fire received\r\n", sizeof("fire received\r\n"), &bw, 0);
                 }
@@ -973,7 +1029,15 @@ int main(void)
     IR_Initialize();
     WiFi_Initialize();
     
-//    printf("Started Main Loop\r\n");
+    MTR_DRIVER_EN_LAT = 1;
+    
+    //AIN1_LAT = REVERSE;
+    //OC2RS = MOTOR_PERIOD/2;
+    
+    //BIN1_LAT = REVERSE;
+    //OC3RS = MOTOR_PERIOD/2;
+    
+    printf("Started Main Loop\r\n");
      
     while (1)
     {
@@ -983,6 +1047,11 @@ int main(void)
 
         ESP_Update(&ESP);
         Check_Hits();
+        
+        if (MTR_DRIVER_NF_PORT == FAULT_CONDITION)
+        {   // motor driver fault
+            
+        }
         
         #if DEV_BOARD
         // Button 3
