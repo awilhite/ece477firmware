@@ -264,7 +264,11 @@ unsigned int ic2_flag = 0;
 unsigned int ic3_count = 0;
 unsigned int ic3_flag = 0;
 unsigned int ic4_count = 0;
+unsigned int ic4_count_old = 0;
 unsigned int ic4_flag = 0;
+
+unsigned int led_flash_count = 0;
+unsigned int led_flash_flag = 0;
 
 // ESP working structure and result enumeration
 ESP_t ESP;
@@ -354,6 +358,8 @@ void IR_Initialize(void)
     ir_comm = 0;
     ir_commc = 0;
     ir_wait = 0;
+    
+    
 
     exp_count = 0; 
 
@@ -362,6 +368,8 @@ void IR_Initialize(void)
     for(i=0;i<67;i++){
         timarr[i] = 0;
     }
+    ir_progress_flag = 0;
+    error_watch = 0;
     
     // Clear data array 
     
@@ -442,10 +450,8 @@ void Check_Hits(void)
                 if(ir_addr == 0x0020){
                     if(ir_comm == 0x0010){  //A8 for "5", 10 for "power"
                         hit_received = 1;
-                        LED_LEFT_LAT = LED_ON;
-                        LED_RIGHT_LAT = LED_ON;
-                        LED_FRONT_LAT = LED_ON;
-                        LED_BACK_LAT = LED_ON;
+                        led_flash_flag = 1;
+                        led_flash_count = 0;
                     }
                 }
             }              
@@ -681,13 +687,13 @@ int power2(int exp)
 
 void IC4_CallBack(void)
 {
-    if(!ir_wait && !ic1_flag && !ic2_flag && !ic3_flag){
-    if(ic4_count == 0){
-        time_ref = 0;
-        error_watch = 0;
-        ir_progress_flag = 1;
-        ic4_flag = 1;
-    }
+    if(!ir_wait){ //&& !ic1_flag && !ic2_flag && !ic3_flag){
+        if(ic4_count == 0){
+            time_ref = 0;
+            error_watch = 0;
+            ir_progress_flag = 1;
+            ic4_flag = 1;
+        }
     timarr[ic4_count] = time_ref;
     ic4_count++;
     }
@@ -702,7 +708,7 @@ void IC4_CallBack(void)
 
 void IC3_CallBack(void)
 {
-    if (!ir_wait && !ic1_flag && !ic2_flag && !ic4_flag){
+    if (!ir_wait){ // && !ic1_flag && !ic2_flag && !ic4_flag){
         if(ic3_count == 0){
             time_ref = 0;
             error_watch = 0;
@@ -727,7 +733,7 @@ void IC2_CallBack(void)
         if(ic2_count == 0){
             time_ref = 0;
             error_watch = 0;
-            ir_progress_flag = 1;
+            //ir_progress_flag = 1;
             ic2_flag = 1;
         }
         timarr[ic2_count] = time_ref;
@@ -750,7 +756,7 @@ void IC1_CallBack(void)
     if(ic1_count == 0){
         time_ref = 0;
         error_watch = 0;
-        ir_progress_flag = 1;
+        //ir_progress_flag = 1;
         ic1_flag = 1;
     }
     timarr[ic1_count] = time_ref;
@@ -775,16 +781,46 @@ void TMR2_CallBack(void)
     
     if (ir_progress_flag){
         error_watch++;
-        if(error_watch > 2185){
-            unsigned int i;
-            for(i=0;i<67;i++){
-                timarr[i] = 0;
-            }
-            ir_progress_flag = 0;
-            ic1_count = 0;
+        
+        if(error_watch > 227){//(error_watch > 2200){
+            if(ic4_count_old == ic4_count){
+                unsigned int i;
+                for(i=0;i<67;i++){
+                    timarr[i] = 0;
+                }
+                ir_progress_flag = 0;
+                ic1_count = 0;
+                error_watch = 0;
+                IR_Initialize();
+             }
+            error_watch = 0;   
         }
     }
-        
+         
+    
+    if (led_flash_flag)
+    {
+        led_flash_count++;
+        if((led_flash_count == 500) || (led_flash_count == 1500) || (led_flash_count == 2500) || (led_flash_count == 3500) || (led_flash_count == 4500))
+        {
+            LED_LEFT_LAT = LED_ON;
+            LED_RIGHT_LAT = LED_ON;
+            LED_FRONT_LAT = LED_ON;
+            LED_BACK_LAT = LED_ON;
+        }
+        else if((led_flash_count == 1000) || (led_flash_count == 2000) || (led_flash_count == 3000) || (led_flash_count == 4000) || (led_flash_count == 5000)){
+            LED_LEFT_LAT = LED_OFF;
+            LED_RIGHT_LAT = LED_OFF;
+            LED_FRONT_LAT = LED_OFF;
+            LED_BACK_LAT = LED_OFF;
+        }
+        if(led_flash_count >= 5005){
+            led_flash_flag = 0;
+            led_flash_count = 0;
+        }
+    }
+    
+    
     if (((ir_send % 14) == 0) && ir_shot_flag)
     {
         ir_shot();
